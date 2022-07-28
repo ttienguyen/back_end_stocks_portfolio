@@ -18,14 +18,23 @@ def create_app():
         "SQLALCHEMY_DATABASE_URI")
 
     # Import models here for Alembic setup
+    from app.models.price import Price
+    from app.models.stock import Stock
     # from app.models.ExampleModel import ExampleModel
 
     db.init_app(app)
     migrate.init_app(app, db)
 
     # Register Blueprints here
-    # from .routes import example_bp
-    # app.register_blueprint(example_bp)
+    from app.routes import stocks_bp
+    from app.routes import prices_bp
+    
+    
+    print("In app, before registering blueprint")
+    app.register_blueprint(prices_bp)
+    app.register_blueprint(stocks_bp)
+    print("Done register blueprint")
+
 
     CORS(app)
     return app

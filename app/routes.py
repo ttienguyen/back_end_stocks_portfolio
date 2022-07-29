@@ -106,19 +106,10 @@ def get_prices_for_one_stock(stock_id):
     
     response = {}
     for i in range(len(prices)):
+        date_str = f'{dates[i]}'
         new_entry = {'price':prices[i], 'percentage_gain':f'{percent_gains_list[i]}%'}
-        response[f'{dates[i]}'] = new_entry
+        response[date_str] = new_entry
     return jsonify(response),201
-'''
-# get all stocks----------    
-@stocks_bp.route("",methods=['GET'])
-# def get_all_stocks():
-#     pass
-
-
-    
-    
-
 
 # update stock by id (PUT method)--------------------   
 @stocks_bp.route("/<id>", methods =["PUT"]) 
@@ -134,39 +125,63 @@ def update_stock_by_id(id):
     
     ticker = update_dict['ticker']
     shares = update_dict['shares']
-    stock.ticker = ticker
-    stock.shares = shares
 
+    if ticker != stock.ticker: 
+        abort (make_response({"detail": "Invalid data: This stock ticker is not in the database.  Hence, you need to post a stock first"},400))
+
+    stock.shares = shares
     db.session.commit()
 
     data_dict = get_stock_price(ticker)
     closed_price = data_dict['Global Quote']['05. price']
     trade_date = data_dict['Global Quote']['07. latest trading day']
     
-    price = Price(date=trade_date,closed_price=closed_price,stock=stock)
-    db.session.commit()
-
     stock_dict = {}
     stock_dict['id'] = stock.id
     stock_dict['ticker'] = stock.ticker
     stock_dict['shares'] = stock.shares
-    stock_dict['price'] = price.closed_price
-    stock_dict['trade_date']= price.date
+    stock_dict['price'] = closed_price
+    stock_dict['trade_date']= trade_date
     return_dict = {"stock": stock_dict}
     return jsonify(return_dict), 201
+
 # remove stock by id---------------
 @stocks_bp.route("/<id>",methods=['DELETE'])
 def remove_stock_by_id(id):
     stock = Stock.query.get(id)
     if (stock==None):
         abort(make_response({"message":f"stock {id} not found"},404))
+
+    update_dict = request.get_json()
+    if 'ticker' not in update_dict:
+        return make_response({"details":"Invalid data"},400)
     
-    prices = stock.prices
-    db.session.delete(prices)
+    ticker = update_dict['ticker']
+    
+    if ticker != stock.ticker: 
+        abort (make_response({"detail": "Invalid data: This ticker does not correspond to the stock_id.  Please check your ticker and stock_id"},400))
+
+    for price in stock.prices:
+        db.session.delete(price)
     db.session.delete(stock)
     db.session.commit()
     
     return make_response({"details":f"stock with {id} successfully deleted"},200)
+
+'''
+# get all prices for one stock by stock_id--------------------
+@stocks_bp.route("/portfolio",methods = ['GET'])
+def get_prices_for_one_stock(stock_id):
+
+'''
+
+'''
+
+
+
+
+
+
 
 '''
 #----------PRICE------------------

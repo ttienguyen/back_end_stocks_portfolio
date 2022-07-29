@@ -30,10 +30,9 @@ def create_app():
     from app.routes import prices_bp
     
     
-    print("In app, before registering blueprint")
     app.register_blueprint(prices_bp)
     app.register_blueprint(stocks_bp)
-    print("Done register blueprint")
+    
 
 
     CORS(app)

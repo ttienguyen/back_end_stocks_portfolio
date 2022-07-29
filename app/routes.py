@@ -63,8 +63,8 @@ def post_stock():
     stock_dict['shares'] = stock.shares
     stock_dict['price'] = closed_price  # because not save to database
     stock_dict['trade_date']= trade_date # because not save to database
-    return_dict = {"stock": stock_dict}
-    return jsonify(return_dict), 201
+    response_dict = {"stock": stock_dict}
+    return jsonify(response_dict), 201
 
 # get all prices for one stock by stock_id--------------------
 @stocks_bp.route("/<stock_id>/prices",methods = ['GET'])
@@ -76,11 +76,6 @@ def get_prices_for_one_stock(stock_id):
     
     prices_db = stock.prices # list of all price instances associated with this stock
     print (prices_db)
-
-
-
-
-
 
     for i in range(len(prices_db)-1):  # sorted price instances by oldest date first and later date last
         oldest_date = prices_db[i].date
@@ -106,12 +101,12 @@ def get_prices_for_one_stock(stock_id):
     
     percent_gains_list = [0]
     for i in range(len(prices)-1):
-        percent_gain = 100 * ((prices[i+1] - prices[i])/prices[i])
+        percent_gain = round(100 * ((prices[i+1] - prices[i])/prices[i]))
         percent_gains_list.append(percent_gain)
     
     response = {}
     for i in range(len(prices)):
-        new_entry = {'price':prices[i], 'percentage_gain':percent_gains_list[i]}
+        new_entry = {'price':prices[i], 'percentage_gain':f'{percent_gains_list[i]}%'}
         response[f'{dates[i]}'] = new_entry
     return jsonify(response),201
 '''

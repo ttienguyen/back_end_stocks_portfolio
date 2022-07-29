@@ -74,14 +74,20 @@ def get_prices_for_one_stock(stock_id):
     if (stock == None):
         abort (make_response({"message":f"stock {stock_id} not found"},404))
     
-    prices_db = Stock.prices # list of all price instances associated with this stock
-    
+    prices_db = stock.prices # list of all price instances associated with this stock
+    print (prices_db)
+
+
+
+
+
+
     for i in range(len(prices_db)-1):  # sorted price instances by oldest date first and later date last
         oldest_date = prices_db[i].date
         oldest_idx = i
         for j in range(i+1, len(prices_db)):
             if prices_db[j].date < oldest_date:
-                oldest_date = prices_db[j]
+                oldest_date = prices_db[j].date
                 oldest_idx = j
         # exchange instances with corresponding dates, so the instance with the oldest date is the first date in the list
         price_instance_with_oldest_date = prices_db[oldest_idx]
@@ -89,31 +95,31 @@ def get_prices_for_one_stock(stock_id):
         prices_db[oldest_idx] = price_instance_with_current_date_iteration
         prices_db[i] = price_instance_with_oldest_date
     
-    price_db = price_db     #price_db is sorted by dates from oldest to current
-    
+    for instance in prices_db:
+        print(instance.date) 
+
     dates = []
     prices = []
     for instance in prices_db:
         dates.append(instance.date)
         prices.append(instance.closed_price)
     
-    percent_gains_list = []
+    percent_gains_list = [0]
     for i in range(len(prices)-1):
         percent_gain = 100 * ((prices[i+1] - prices[i])/prices[i])
         percent_gains_list.append(percent_gain)
     
     response = {}
     for i in range(len(prices)):
-        result = {}
-        for j in range(i, len(prices)):
-            result['date'] = dates[j]
-            result['price'] = prices[j]
-        response['stock'] = result
+        new_entry = {'price':prices[i], 'percentage_gain':percent_gains_list[i]}
+        response[f'{dates[i]}'] = new_entry
     return jsonify(response),201
-
+'''
 # get all stocks----------    
 @stocks_bp.route("",methods=['GET'])
-def get_all_stocks():
+# def get_all_stocks():
+#     pass
+
 
     
     
@@ -167,7 +173,7 @@ def remove_stock_by_id(id):
     
     return make_response({"details":f"stock with {id} successfully deleted"},200)
 
-
+'''
 #----------PRICE------------------
 prices_bp = Blueprint("prices_bp", __name__, url_prefix="/prices")
 @stocks_bp.route("/prices", methods=["POST"])

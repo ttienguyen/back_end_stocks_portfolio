@@ -8,7 +8,8 @@ from dotenv import load_dotenv
 load_dotenv()
 API_key = os.environ.get("API_KEY")
 
-#--------request "GET" from external stock API--------------
+#---------------------------------------------------------------------
+#------------------request "GET" from external stock API--------------
 def get_stock_price(ticker):  # for one datapoint == one price
     params = {"function":"GLOBAL_QUOTE", "symbol":ticker,'apikey': API_key}
     url = 'https://www.alphavantage.co/query'
@@ -20,7 +21,8 @@ def time_series_monthly_adjusted(ticker):
     url = 'https://www.alphavantage.co/query'
     data = requests.get(url,params)
     return data.json()
-#----------------------STOCK------------------
+#---------------------------------------------------------------------------------------
+#----------------------INDIVIDUAL STOCK-------------------------------------------------
 stocks_bp = Blueprint("stocks_bp", __name__, url_prefix="/stocks")
 
 #post a stock-----------------------------
@@ -51,7 +53,7 @@ def post_stock():
     monthly_data = data['Monthly Adjusted Time Series']
     for date in monthly_data:
         print(date)
-        if date <= "2022-06-30" and date > "2021-06-30":
+        if date <= "2022-06-30" and date > "2021-05-30":
             monthly_price = monthly_data[date]['5. adjusted close']
             price = Price(date=date,closed_price=monthly_price,stock=stock) 
             db.session.add(price)
@@ -66,7 +68,7 @@ def post_stock():
     response_dict = {"stock": stock_dict}
     return jsonify(response_dict), 201
 
-# get all prices for one stock by stock_id--------------------
+#get all prices for one stock by stock_id--------------------
 @stocks_bp.route("/<stock_id>/prices",methods = ['GET'])
 def get_prices_for_one_stock(stock_id):
     
@@ -107,11 +109,11 @@ def get_prices_for_one_stock(stock_id):
     response = {}
     for i in range(len(prices)):
         date_str = f'{dates[i]}'
-        new_entry = {'price':prices[i], 'percentage_gain':f'{percent_gains_list[i]}%'}
+        new_entry = {'price':prices[i], 'percentage_gain': percent_gains_list[i]}
         response[date_str] = new_entry
     return jsonify(response),201
 
-# update stock by id (PUT method)--------------------   
+#update stock by id (PUT method)---------------------------------------------   
 @stocks_bp.route("/<id>", methods =["PUT"]) 
 def update_stock_by_id(id):
 
@@ -142,10 +144,10 @@ def update_stock_by_id(id):
     stock_dict['shares'] = stock.shares
     stock_dict['price'] = closed_price
     stock_dict['trade_date']= trade_date
-    return_dict = {"stock": stock_dict}
-    return jsonify(return_dict), 201
+    response_dict = {"stock": stock_dict}
+    return jsonify(response_dict), 201
 
-# remove stock by id---------------
+#remove stock by id-----------------------------------------------------
 @stocks_bp.route("/<id>",methods=['DELETE'])
 def remove_stock_by_id(id):
     stock = Stock.query.get(id)
@@ -168,48 +170,94 @@ def remove_stock_by_id(id):
     
     return make_response({"details":f"stock with {id} successfully deleted"},200)
 
-'''
-# get all prices for one stock by stock_id--------------------
-@stocks_bp.route("/portfolio",methods = ['GET'])
-def get_prices_for_one_stock(stock_id):
+#-----------------------------------------------------------------------------------
+#------------------------STOCKS PORTFOLIO--------------------------------------------
 
-'''
-
-'''
-
-
-
-
-
-
-
-'''
-#----------PRICE------------------
-prices_bp = Blueprint("prices_bp", __name__, url_prefix="/prices")
-@stocks_bp.route("/prices", methods=["POST"])
-def post_price():
-    pass
-# #get historical monthly prices associated with stock
-# @stocks_bp.route("/<stock_id>/prices", methods=["GET"])
-# def get_historical_prices(stock_id):
-#     stock = Stock.query.get(stock_id)
-#     if stock==None:
-#         abort(make_response({"message":f"stock {stock_id} not found"},400))
+#total value of stocks portfolio at the latest trade date----------------------------
+@stocks_bp.route("/portfolio/value",methods=['GET'])
+def total_value_portfolio():
     
-#     prices = stock.prices
-#     price_list = []
-#     for price in prices:
-#         price_dict = {
-#         'id': price.id,
-#         'date' : price.date,
-#         'closed_price' : price.closed_price,
-#         }
-#         price_list.append(price_dict)
-    
-#     response_dict = {
-#         'id': stock.id,
-#         'ticker': stock.ticker,
-#         'prices': price_list
-#     }
-#     return jsonify(response_dict),200
+    stock_db = Stock.query.all()
 
+    stock_tickers_list = []
+    stock_shares_list = []
+    stock_prices_list = []
+    stock_values_list = []
+    
+    portfolio_total_value = 0
+    for stock in stock_db:
+        data_dict = get_stock_price(stock.ticker)
+        closed_price = data_dict['Global Quote']['05. price'] # not save to database
+        stock_value = float(closed_price) * stock.shares
+
+        stock_tickers_list.append(stock.ticker)
+        stock_prices_list.append(closed_price)
+        stock_shares_list.append(stock.shares)
+        stock_values_list.append(stock_value)
+        portfolio_total_value += stock_value
+    
+    trade_date = data_dict['Global Quote']['07. latest trading day'] # not save to database
+    
+    portfolio = {'portfolio_values': round(portfolio_total_value,2), 'date': trade_date}
+
+    for i in range(len(stock_prices_list)):
+        
+        stock_total_value = {'price': round(float(stock_prices_list[i]),2), 'shares': stock_shares_list[i], 'stock_value': round(stock_values_list[i],2)}
+        portfolio[stock_tickers_list[i]] = stock_total_value
+    return jsonify(portfolio),201
+
+'''    
+#get all prices for stocks portfolio--------------------
+@stocks_bp.route("/portfolio/trend",methods=['GET'])
+def percent_gain_overtime():
+
+    stocks_db = Stock.query.all()
+    
+
+    
+    portfolio = {}
+    for stock in stocks_db:
+        
+        stock_dates = []
+        stock_prices = []
+        
+        stock_prices = stock.prices # list of all price instances associated with this stock
+        for i in range(len(stock_prices)-1):  # sorted price instances by oldest date first and later date last
+            oldest_date = stock_prices[i].date
+            oldest_idx = i
+            for j in range(i+1, len(stock_prices)):
+                if stock_prices[j].date < oldest_date:
+                    oldest_date = stock_prices[j].date
+                    oldest_idx = j
+            # exchange instances with corresponding dates, so the instance with the oldest date is the first date in the list
+            price_instance_with_oldest_date = stock_prices[oldest_idx]
+            price_instance_with_current_date_iteration = stock_prices[i]
+            stock_prices[oldest_idx] = price_instance_with_current_date_iteration
+            stock_prices[i] = price_instance_with_oldest_date
+        
+        for instance in stock_prices:
+            stock_dates.append(instance.date)
+            stock_prices.append(instance.closed_price)
+        
+        portfolio = {}
+        stock_dict = {}
+        stock_dict['ticker'] = stock.ticker
+        stock_dict['prices'] = stock_prices
+        portfolio['stock'] = stock_dict
+        portfolio['dates'] = stock_dates
+    
+    # sum of all stock at each data point
+
+
+percent_gains_list = [0]
+    for i in range(len(prices)-1):
+        percent_gain = round(100 * ((prices[i+1] - prices[i])/prices[i]))
+        percent_gains_list.append(percent_gain)
+    
+    response = {}
+    for i in range(len(prices)):
+        date_str = f'{dates[i]}'
+        new_entry = {'price':prices[i], 'percentage_gain':f'{percent_gains_list[i]}%'}
+        response[date_str] = new_entry
+    return jsonify(response),201
+'''

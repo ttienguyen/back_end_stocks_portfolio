@@ -27,10 +27,10 @@ def create_app():
 
     # Register Blueprints here
     from app.routes import stocks_bp
-    from app.routes import prices_bp
+    # from app.routes import prices_bp
     
     
-    app.register_blueprint(prices_bp)
+    # app.register_blueprint(prices_bp)
     app.register_blueprint(stocks_bp)
     
 

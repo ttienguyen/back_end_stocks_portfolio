@@ -20,14 +20,14 @@ def create_app():
     # Import models here for Alembic setup
     from app.models.price import Price
     from app.models.stock import Stock
-    # from app.models.ExampleModel import ExampleModel
+    
 
     db.init_app(app)
     migrate.init_app(app, db)
 
     # Register Blueprints here
     from app.routes import stocks_bp
-    # from app.routes import prices_bp
+   
     
     
     # app.register_blueprint(prices_bp)

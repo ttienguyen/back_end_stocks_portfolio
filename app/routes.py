@@ -67,7 +67,28 @@ def post_stock():
     stock_dict['trade_date']= trade_date # because not save to database
     response_dict = {"stock": stock_dict}
     return jsonify(response_dict), 201
+#----------------------------------------------------------
+#get all stocks--------------------------------------------
+@stocks_bp.route("",methods = ["GET"])
+def get_all_stocks():
+    sort_query = request.args.get('sort')
+    if sort_query == 'asc':
+        stock_db = Stock.query.order_by(Stock.ticker.asc()).all()
+    elif sort_query == 'desc':
+        stock_db = Stock.query.order_by(Stock.ticker.desc()).all()
+    else:
+        stock_db = Stock.query.all()
+    
+    stocks_response = {}
+    
+    for stock in stock_db:
+        stock_dict = {}
+        stock_dict['ticker'] = stock.ticker
+        stock_dict['shares'] = stock.shares
+        stocks_response[f'id# {stock.id}'] = stock_dict
 
+    return jsonify(stocks_response),200
+#----------------------------------------------------------
 #get all prices for one stock by stock_id--------------------
 @stocks_bp.route("/<stock_id>/prices",methods = ['GET'])
 def get_prices_for_one_stock(stock_id):
@@ -112,7 +133,7 @@ def get_prices_for_one_stock(stock_id):
         new_entry = {'price':prices[i], 'percentage_gain': percent_gains_list[i]}
         response[date_str] = new_entry
     return jsonify(response),201
-
+#---------------------------------------------------------------------------
 #update stock by id (PUT method)---------------------------------------------   
 @stocks_bp.route("/<id>", methods =["PUT"]) 
 def update_stock_by_id(id):
@@ -146,7 +167,7 @@ def update_stock_by_id(id):
     stock_dict['trade_date']= trade_date
     response_dict = {"stock": stock_dict}
     return jsonify(response_dict), 201
-
+#--------------------------------------------------------------------
 #remove stock by id-----------------------------------------------------
 @stocks_bp.route("/<id>",methods=['DELETE'])
 def remove_stock_by_id(id):
@@ -206,6 +227,7 @@ def total_value_portfolio():
         portfolio[stock_tickers_list[i]] = stock_total_value
     return jsonify(portfolio),201
 
+<<<<<<< HEAD
 
 
 '''
@@ -249,3 +271,6 @@ def percent_gain_overtime():
         portfolio['stocks'] = stocks
 
 '''
+=======
+
+>>>>>>> main

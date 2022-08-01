@@ -206,8 +206,10 @@ def total_value_portfolio():
         portfolio[stock_tickers_list[i]] = stock_total_value
     return jsonify(portfolio),201
 
-'''    
-#get all prices for stocks portfolio--------------------
+
+
+'''
+#prices for stocks portfolio--------------------
 @stocks_bp.route("/portfolio/trend",methods=['GET'])
 def percent_gain_overtime():
 
@@ -239,25 +241,11 @@ def percent_gain_overtime():
             stock_dates.append(instance.date)
             stock_prices.append(instance.closed_price)
         
-        portfolio = {}
-        stock_dict = {}
-        stock_dict['ticker'] = stock.ticker
-        stock_dict['prices'] = stock_prices
-        portfolio['stock'] = stock_dict
-        portfolio['dates'] = stock_dates
-    
-    # sum of all stock at each data point
+        stocks = {}
+        stock['ticker'] = stock.ticker
+        stocks['prices'] = stock_prices
+        stocks['dates'] = stock_dates
+        
+        portfolio['stocks'] = stocks
 
-
-percent_gains_list = [0]
-    for i in range(len(prices)-1):
-        percent_gain = round(100 * ((prices[i+1] - prices[i])/prices[i]))
-        percent_gains_list.append(percent_gain)
-    
-    response = {}
-    for i in range(len(prices)):
-        date_str = f'{dates[i]}'
-        new_entry = {'price':prices[i], 'percentage_gain':f'{percent_gains_list[i]}%'}
-        response[date_str] = new_entry
-    return jsonify(response),201
 '''

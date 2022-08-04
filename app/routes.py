@@ -143,19 +143,16 @@ def update_stock_by_id(id):
         abort(make_response({"message":f"stock {id} not found"}, 404))
 
     update_dict = request.get_json()
-    if 'ticker' not in update_dict or 'shares' not in update_dict:
+    if 'shares' not in update_dict:
         return make_response({"details":"Invalid data"},400)
     
-    ticker = update_dict['ticker']
+    
     shares = update_dict['shares']
-
-    if ticker != stock.ticker: 
-        abort (make_response({"detail": "Invalid data: This stock ticker is not in the database.  Hence, you need to post a stock first"},400))
 
     stock.shares = shares
     db.session.commit()
 
-    data_dict = get_stock_price(ticker)
+    data_dict = get_stock_price(stock.ticker)
     closed_price = data_dict['Global Quote']['05. price']
     trade_date = data_dict['Global Quote']['07. latest trading day']
     
@@ -174,15 +171,6 @@ def remove_stock_by_id(id):
     stock = Stock.query.get(id)
     if (stock==None):
         abort(make_response({"message":f"stock {id} not found"},404))
-
-    update_dict = request.get_json()
-    if 'ticker' not in update_dict:
-        return make_response({"details":"Invalid data"},400)
-    
-    ticker = update_dict['ticker']
-    
-    if ticker != stock.ticker: 
-        abort (make_response({"detail": "Invalid data: This ticker does not correspond to the stock_id.  Please check your ticker and stock_id"},400))
 
     for price in stock.prices:
         db.session.delete(price)

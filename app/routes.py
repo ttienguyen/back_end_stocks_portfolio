@@ -199,7 +199,7 @@ def remove_stock_by_id(id):
 def total_value_portfolio():
     
     stock_db = Stock.query.all()
-
+    stock_id_list = []
     stock_tickers_list = []
     stock_shares_list = []
     stock_prices_list = []
@@ -211,6 +211,7 @@ def total_value_portfolio():
         closed_price = data_dict['Global Quote']['05. price'] # not save to database
         stock_value = float(closed_price) * stock.shares
 
+        stock_id_list.append(stock.id)
         stock_tickers_list.append(stock.ticker)
         stock_prices_list.append(closed_price)
         stock_shares_list.append(stock.shares)
@@ -219,12 +220,12 @@ def total_value_portfolio():
     
     trade_date = data_dict['Global Quote']['07. latest trading day'] # not save to database
     
-    portfolio = {'portfolio_values': round(portfolio_total_value,2), 'date': trade_date}
+    portfolio = {'portfolio_values': round(portfolio_total_value,2), 'date': trade_date, "stocks":[]}
 
     for i in range(len(stock_prices_list)):
         
-        stock_total_value = {'price': round(float(stock_prices_list[i]),2), 'shares': stock_shares_list[i], 'stock_value': round(stock_values_list[i],2)}
-        portfolio[stock_tickers_list[i]] = stock_total_value
+        stock_total_value = {'ticker':stock_tickers_list[i],'id': stock_id_list[i], 'price': round(float(stock_prices_list[i]),2), 'shares': stock_shares_list[i], 'stock_value': round(stock_values_list[i],2)}
+        portfolio['stocks'].append(stock_total_value)
     return jsonify(portfolio),201
 
 

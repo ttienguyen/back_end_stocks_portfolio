@@ -132,7 +132,8 @@ def get_prices_for_one_stock(stock_id):
     for i in range(len(prices)):
         new_entry = {"date":f'{dates[i]}','price':prices[i], 'percentage_gain': percent_gains_list[i]}
         historical_data.append(new_entry)
-    response[stock.ticker] = historical_data
+    response['prices'] = historical_data
+    response['ticker'] = stock.ticker
     return jsonify(response),201
 
 #---------------------------------------------------------------------------

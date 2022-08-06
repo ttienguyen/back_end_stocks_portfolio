@@ -134,8 +134,6 @@ def get_prices_for_one_stock(stock_id):
         historical_data.append(new_entry)
     response[stock.ticker] = historical_data
     return jsonify(response),201
-  
-
 
 #---------------------------------------------------------------------------
 #update stock by id (PUT method)---------------------------------------------   

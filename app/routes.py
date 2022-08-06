@@ -128,11 +128,15 @@ def get_prices_for_one_stock(stock_id):
         percent_gains_list.append(percent_gain)
     
     response = {}
+    historical_data = []
     for i in range(len(prices)):
-        date_str = f'{dates[i]}'
-        new_entry = {'price':prices[i], 'percentage_gain': percent_gains_list[i]}
-        response[date_str] = new_entry
+        new_entry = {"date":f'{dates[i]}','price':prices[i], 'percentage_gain': percent_gains_list[i]}
+        historical_data.append(new_entry)
+    response[stock.ticker] = historical_data
     return jsonify(response),201
+  
+
+
 #---------------------------------------------------------------------------
 #update stock by id (PUT method)---------------------------------------------   
 @stocks_bp.route("/<id>", methods =["PUT"]) 

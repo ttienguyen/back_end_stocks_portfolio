@@ -211,7 +211,7 @@ def total_value_portfolio():
     
     trade_date = data_dict['Global Quote']['07. latest trading day'] # not save to database
     
-    portfolio = {'portfolio_values': round(portfolio_total_value,2), 'date': trade_date, "stocks":[]}
+    portfolio = {'portfolio_value': round(portfolio_total_value,2), 'date': trade_date, "stocks":[]}
 
     for i in range(len(stock_prices_list)):
         
